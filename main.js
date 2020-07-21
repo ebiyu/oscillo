@@ -12,10 +12,10 @@ const x_divs = 10;
 const y_divs = 10;
 
 // variables
-let divsize_x = 1 / 440; // s. / div
+let divsize_x = 0.01; // s. / div
 
 // draw settigns
-const gridWidth = 0.5;
+const gridWidth = 1;
 const gridWidth_bold = 2;
 const waveWidth = 2;
 
@@ -36,26 +36,51 @@ let recording = false;
 let initialized = false;
 
 // trigger
-const trigger_type = "force";
-setInterval(trigger, 10);
+let triggerLevel = 0;
+let trigger_type = "up";
+
+setInterval(trigger_check, 10);
 let triggerIndex = 0;
 let triggerDelta = 0;
+let triggerLastChecked = 0;
 
-function trigger(){
+function trigger_check(){
 	if (!initialized) return;
 
+	// abort if triggering has not ended
 	const indexSize = divsize_x * x_divs * audioContext.sampleRate;
-	if (audioData.length - triggerIndex < indexSize) return;
-
-	let nextTriggerIndex;
-
-	if(trigger_type == "up"){
-	}else{
-		nextTriggerIndex = audioData.length;
+	if (audioData.length - triggerIndex < indexSize) {
+		triggerLastChecked = audioData.length;
+		return;
 	}
 
-	triggerDelta = nextTriggerIndex - triggerIndex;
-	triggerIndex = nextTriggerIndex;
+	if(trigger_type == "up"){
+		// check positive edge
+		let below = false;
+		audioData.slice(triggerLastChecked).some((v, i) => {
+			if(v > triggerLevel){
+				if(below){
+					trigger(triggerLastChecked + i);
+					return true;
+				}
+			}else{
+				below = true;
+			}
+		})
+	}else{
+		trigger(audioData.length);
+	}
+
+	triggerLastChecked = audioData.length;
+}
+
+function trigger(index){
+	const prevTriggerIndex = triggerIndex;
+	triggerIndex = index;
+	triggerDelta = triggerIndex - prevTriggerIndex;
+	console.count();
+	// console.log(triggerLastChecked);
+	console.log({prevTriggerIndex, triggerIndex, triggerDelta, triggerLastChecked})
 }
 
 setInterval(draw, 30);
@@ -67,15 +92,11 @@ function draw(){
 }
 
 function drawText(){
-	let divsize_x_disp;
-	if(divsize_x >= 1){
-		divsize_x_disp = `${divsize_x.toFixed(2)} s/div`
-	}else if(divsize_x >= 1e-3){
-		divsize_x_disp = `${(divsize_x * 1e3).toFixed(2)} ms/div`
-	}else{
-		divsize_x_disp = `${(divsize_x * 1e6).toFixed(2)} us/div`
-	}
-	document.getElementById('bottomDisplay').innerText = `${divsize_x_disp}`;
+	const divsize_x_disp = divsize_x >= 1 ? `${divsize_x.toFixed(2)} s/div` :
+		divsize_x >= 1e-3 ? `${(divsize_x * 1e3).toFixed(2)} ms/div` :
+		`${(divsize_x * 1e6).toFixed(2)} us/div`;
+	const trigger_disp = trigger_type == "up" ? `Trigger Level ${triggerLevel.toFixed(2)}↑` : "No Trigger";
+	document.getElementById('bottomDisplay').innerHTML = `${divsize_x_disp} <span style="color: orange">${trigger_disp}</span>`;
 }
 
 function drawGrid(){
@@ -108,6 +129,17 @@ function drawGrid(){
 		ctx.lineTo(x, height);
 		ctx.stroke();
 	});
+
+	// trigger
+	if(trigger_type == "up"){
+		ctx.strokeStyle = "orange";
+		ctx.lineWidth = gridWidth_bold;
+		const y =  (0.5 - triggerLevel / 2) * height;
+		ctx.beginPath();
+		ctx.moveTo(0, y);
+		ctx.lineTo(width, y);
+		ctx.stroke();
+	}
 }
 
 function drawWave(){
@@ -115,10 +147,6 @@ function drawWave(){
 
 	const length = divsize_x * x_divs * audioContext.sampleRate;
 	const startIndex = triggerIndex;
-
-	const indexSize = divsize_x * x_divs * audioContext.sampleRate;
-
-	// let time = length / audioContext.sampleRate;
 
 	ctx.strokeStyle = waveColor;
 	ctx.lineWidth = waveWidth;
@@ -133,7 +161,7 @@ function drawWave(){
 			index -= triggerDelta;
 		}
 		const val = audioData[index];
-		const y = (val / 2 + 0.5) * canvas.height;
+		const y = (0.5 - val / 2) * canvas.height;
 		ctx.lineTo(x, y);
 	});
 
@@ -150,9 +178,9 @@ function initialize(){
 	audioContext = new AudioContext();
 	navigator.getUserMedia({audio: true}, stream => {
 		localMediaStream = stream;
-		let scriptProcessor = audioContext.createScriptProcessor(bufferSize, 1, 1);
+		const scriptProcessor = audioContext.createScriptProcessor(bufferSize, 1, 1);
 		localScriptProcessor = scriptProcessor;
-		let mediastreamsource = audioContext.createMediaStreamSource(stream);
+		const mediastreamsource = audioContext.createMediaStreamSource(stream);
 		mediastreamsource.connect(scriptProcessor);
 		scriptProcessor.onaudioprocess = onAudioProcess;
 		scriptProcessor.connect(audioContext.destination);
@@ -170,3 +198,28 @@ function onAudioProcess(e) {
 	let input = e.inputBuffer.getChannelData(0);
 	audioData = [...audioData, ...input];
 };
+
+// shortcut keys
+document.onkeydown = e => {
+	console.log(e.keyCode);
+	switch(e.keyCode){
+		case 32: // space
+			toggleRecording();
+			break;
+		case 38: //up
+			triggerLevel += 0.05;
+			break;
+		case 40: //down
+			triggerLevel -= 0.05;
+			break;
+		case 37: //left
+			divsize_x /= 10;
+			break;
+		case 39: //right
+			divsize_x *= 10;
+			break;
+		case 84:
+			trigger_type = trigger_type == "up" ? "" : "up";
+			break;
+	}
+}
