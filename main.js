@@ -48,6 +48,7 @@ setInterval(trigger_check, 10);
 let triggerIndex = 0;
 let triggerDelta = 0;
 let triggerLastChecked = 0;
+let triggeredIndicator = 0;
 
 function trigger_check(){
 	if (!initialized) return;
@@ -83,6 +84,7 @@ function trigger(index){
 	const prevTriggerIndex = triggerIndex;
 	triggerIndex = index;
 	triggerDelta = triggerIndex - prevTriggerIndex;
+	triggeredIndicator = 3;
 }
 
 setInterval(draw, 30);
@@ -97,7 +99,9 @@ function drawText(){
 	const divsize_x_disp = divsize_x >= 1 ? `${divsize_x.toFixed(2)} s/div` :
 		divsize_x >= 1e-3 ? `${(divsize_x * 1e3).toFixed(2)} ms/div` :
 		`${(divsize_x * 1e6).toFixed(2)} us/div`;
-	const trigger_disp = trigger_type == "up" ? `Trigger Level ${triggerLevel.toFixed(2)}↑` : "No Trigger";
+	const trigger_indicate = triggeredIndicator > 0 ? "Triggered" : "";
+	triggeredIndicator -= 1;
+	const trigger_disp = trigger_type == "up" ? `Trigger Level ${triggerLevel.toFixed(2)}↑ ${trigger_indicate}` : "No Trigger";
 	document.getElementById('bottomDisplay').innerHTML = `${divsize_x_disp} <span style="color: orange">${trigger_disp}</span>`;
 }
 
