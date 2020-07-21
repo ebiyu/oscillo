@@ -3,7 +3,12 @@
 navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 
 const canvas = document.getElementById('wave_canvas');
+const container = document.getElementById('canvas_container');
 const ctx = canvas.getContext('2d');
+
+canvas.width = container.clientWidth;
+canvas.height = canvas.width * 3 / 4;
+console.log(canvas.width);
 const width = canvas.width;
 const height = canvas.height;
 
@@ -50,7 +55,7 @@ function trigger_check(){
 	// abort if triggering has not ended
 	const indexSize = divsize_x * x_divs * audioContext.sampleRate;
 	if (audioData.length - triggerIndex < indexSize) {
-		triggerLastChecked = audioData.length;
+		triggerLastChecked = audio / Data.length;
 		return;
 	}
 
@@ -78,9 +83,6 @@ function trigger(index){
 	const prevTriggerIndex = triggerIndex;
 	triggerIndex = index;
 	triggerDelta = triggerIndex - prevTriggerIndex;
-	console.count();
-	// console.log(triggerLastChecked);
-	console.log({prevTriggerIndex, triggerIndex, triggerDelta, triggerLastChecked})
 }
 
 setInterval(draw, 30);
@@ -201,7 +203,6 @@ function onAudioProcess(e) {
 
 // shortcut keys
 document.onkeydown = e => {
-	console.log(e.keyCode);
 	switch(e.keyCode){
 		case 32: // space
 			toggleRecording();
@@ -213,13 +214,27 @@ document.onkeydown = e => {
 			triggerLevel -= 0.05;
 			break;
 		case 37: //left
-			divsize_x /= 10;
+			divsize_x_down();
 			break;
 		case 39: //right
-			divsize_x *= 10;
+			divsize_x_up();
 			break;
 		case 84:
-			trigger_type = trigger_type == "up" ? "" : "up";
+			toggleTrigger();
 			break;
 	}
+}
+
+function toggleTrigger(){
+	trigger_type = trigger_type == "up" ? "" : "up";
+}
+
+function divsize_x_down(){
+			divsize_x /= 10;
+
+}
+
+function divsize_x_up(){
+			divsize_x *= 10;
+
 }

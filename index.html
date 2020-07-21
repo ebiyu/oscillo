@@ -4,15 +4,23 @@
 		<meta charset="UTF-8">
 		<title>Oscilloscope</title>
 		<link rel="stylesheet" href="style.css">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	</head>
 	<body>
-		<div style="display: flex">
-			<div style="margin: 10px; background-color: #111;" >
-				<canvas id="wave_canvas" width="800" height="600"></canvas>
-				<div id="bottomDisplay" style="color: white; padding: 5px; "></div>
-			</div>
-			<div style="margin: 10px">
+		<div id="canvas_container">
+			<canvas id="wave_canvas" width="800" height="600"></canvas>
+			<div id="bottomDisplay" style="color: white; padding: 5px;"></div>
+		</div>
+		<div>
+			<div style="display: flex">
 				<button onclick="toggleRecording()" id="togglebutton">Run</button>
+				<button onclick="divsize_x_down()">←→</button>
+				<button onclick="divsize_x_up()">→←</button>
+			</div>
+			<div style="display: flex">
+				<button onclick="toggleTrigger()">Trigger ON/OFF</button>
+				<button onclick="triggerLevel += 0.05">↑</button>
+				<button onclick="triggerLevel -= 0.05">↓</button>
 			</div>
 		</div>
 		<script src="main.js"></script>

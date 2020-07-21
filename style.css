@@ -1,3 +1,19 @@
 *{
     font-family: sans-serif;
 }
+html, body{
+    margin: 0;
+    padding: 0;
+}
+button {
+    font-size: 2em;
+    margin: 5px;
+    padding: 5px;
+    min-width: 50px;
+}
+#canvas_container{
+    width: 100%;
+    max-width: 800px;
+    display: inline-block;
+    background-color: #111;
+}
