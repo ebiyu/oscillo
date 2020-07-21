@@ -55,7 +55,7 @@ function trigger_check(){
 	// abort if triggering has not ended
 	const indexSize = divsize_x * x_divs * audioContext.sampleRate;
 	if (audioData.length - triggerIndex < indexSize) {
-		triggerLastChecked = audio / Data.length;
+		triggerLastChecked = audioData.length;
 		return;
 	}
 
