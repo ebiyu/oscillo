@@ -243,11 +243,7 @@ function drawFFT(){
 
 	// horizontal grid
 	[...Array(y_divs + 1)].map((_, i) => i).forEach(i => {
-		if(i * 2 == y_divs){
-			ctx.lineWidth = gridWidth_bold;
-		}else{
-			ctx.lineWidth = gridWidth;
-		}
+		ctx.lineWidth = gridWidth;
 		const y = i * height / y_divs;
 		ctx.beginPath();
 		ctx.moveTo(0, y);
@@ -257,11 +253,7 @@ function drawFFT(){
 
 	// vertical grid
 	[...Array(x_divs + 1)].map((_, i) => i).forEach(i => {
-		if(i * 2 == x_divs){
-			ctx.lineWidth = gridWidth_bold;
-		}else{
-			ctx.lineWidth = gridWidth;
-		}
+		ctx.lineWidth = gridWidth;
 		const x = i * width / x_divs;
 		ctx.beginPath();
 		ctx.moveTo(x, 0);
