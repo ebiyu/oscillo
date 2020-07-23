@@ -3,13 +3,15 @@
 navigator.getUserMedia = navigator.getUserMedia || navigator.webkitGetUserMedia || navigator.mozGetUserMedia;
 
 const canvas = document.getElementById('wave_canvas');
+const fft_canvas = document.getElementById('fft_canvas');
 const container = document.getElementById('canvas_container');
-const ctx = canvas.getContext('2d');
 
 canvas.width = container.clientWidth;
 canvas.height = canvas.width * 3 / 4;
 const width = canvas.width;
 const height = canvas.height;
+fft_canvas.width = width;
+fft_canvas.height = height;
 
 // fundamental settings
 const x_divs = 10;
@@ -34,6 +36,10 @@ let localScriptProcessor = null;
 let audioContext = null;
 let audioAnalyser = null;
 let audioData = []; // wave data
+
+// fft
+const fft_points = 1024;
+let fftData = [];
 
 // flags
 let recording = false;
@@ -85,12 +91,67 @@ function trigger(index){
 	triggeredIndicator = 3;
 }
 
+setInterval(fft, 30);
+function fft(){
+	if (!initialized) return;
+
+	const data = audioData.slice(audioData.length - fft_points, audioData.length);
+	if (data.length < fft_points) return;
+
+	// calc w
+	const w =  [Math.cos(Math.PI * 2 / fft_points), Math.sin(Math.PI * 2 / fft_points)];
+	fftData = fft_r(data.map(r => [r, 0]), w).map(c => complex_abs(c));
+
+	function fft_r(x, w){
+		const N = x.length;
+		if (N == 1) return x;
+
+		let x_even = [...Array(N / 2)];
+		let x_odd = [...Array(N / 2)];
+		let W = [1, 0];
+
+		for(let i = 0; i < N / 2; i++){
+			x_even[i] = complex_add(x[i], x[i + N / 2]);
+			x_odd[i] = complex_mul(W, complex_sub(x[i], x[i + N / 2]));
+			W = complex_mul(W, w);
+		}
+		const w2 = complex_mul(w, w);
+		const y_even = fft_r(x_even, w2);
+		const y_odd = fft_r(x_odd, w2);
+		return [...Array(N)].map((_, i) => {
+			if(i % 2 == 0){
+				return y_even[i / 2];
+			}else{
+				return y_odd[(i - 1) / 2];
+			}
+		});
+	}
+}
+
+function complex_add(a, b){
+	return [a[0] + b[0], a[1] + b[1]];
+}
+
+function complex_sub(a, b){
+	return [a[0] - b[0], a[1] - b[1]];
+}
+
+function complex_mul(a, b){
+	return [
+		a[0] * b[0] - a[1] * b[1],
+		a[1] * b[0] + a[0] * b[1],
+	];
+}
+
+function complex_abs(a){
+	return Math.sqrt(a[0] * a[0] + a[1] * a[1]);
+}
+
 setInterval(draw, 30);
 function draw(){
-	ctx.clearRect(0, 0, width, height);
 	drawText();
-	drawGrid();
 	drawWave();
+	drawFFT();
 }
 
 function drawText(){
@@ -103,10 +164,13 @@ function drawText(){
 	document.getElementById('bottomDisplay').innerHTML = `${divsize_x_disp} <span style="color: orange">${trigger_disp}</span>`;
 }
 
-function drawGrid(){
+function drawWave(){
+	const ctx = canvas.getContext('2d');
+	ctx.clearRect(0, 0, width, height);
+
 	ctx.strokeStyle ="#fff";
 
-	// horizontal
+	// horizontal grid
 	[...Array(y_divs + 1)].map((_, i) => i).forEach(i => {
 		if(i * 2 == y_divs){
 			ctx.lineWidth = gridWidth_bold;
@@ -120,7 +184,7 @@ function drawGrid(){
 		ctx.stroke();
 	});
 
-	// vertical
+	// vertical grid
 	[...Array(x_divs + 1)].map((_, i) => i).forEach(i => {
 		if(i * 2 == x_divs){
 			ctx.lineWidth = gridWidth_bold;
@@ -134,7 +198,7 @@ function drawGrid(){
 		ctx.stroke();
 	});
 
-	// trigger
+	// trigger level
 	if(trigger_type == "up"){
 		ctx.strokeStyle = "orange";
 		ctx.lineWidth = gridWidth_bold;
@@ -144,9 +208,7 @@ function drawGrid(){
 		ctx.lineTo(width, y);
 		ctx.stroke();
 	}
-}
 
-function drawWave(){
 	if (!initialized) return;
 
 	const length = divsize_x * x_divs * audioContext.sampleRate;
@@ -166,6 +228,27 @@ function drawWave(){
 		}
 		const val = audioData[index];
 		const y = (0.5 - val / 2) * canvas.height;
+		ctx.lineTo(x, y);
+	});
+
+	ctx.stroke();
+}
+
+function drawFFT(){
+	const ctx = fft_canvas.getContext('2d');
+	ctx.clearRect(0, 0, width, height);
+
+	if (!initialized) return;
+
+	ctx.strokeStyle = "red";
+	ctx.lineWidth = waveWidth;
+
+	ctx.beginPath();
+
+	[...Array(width)].map((_, i) => i).forEach(x => {
+		const index = Math.floor(x * fft_points / width);
+		const val = fftData[index];
+		const y = (1 - val / 100) * canvas.height;
 		ctx.lineTo(x, y);
 	});
 
