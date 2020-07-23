@@ -81,9 +81,8 @@ function trigger_check(){
 }
 
 function trigger(index){
-	const prevTriggerIndex = triggerIndex;
+	triggerDelta = index - triggerIndex;
 	triggerIndex = index;
-	triggerDelta = triggerIndex - prevTriggerIndex;
 	triggeredIndicator = 3;
 }
 
