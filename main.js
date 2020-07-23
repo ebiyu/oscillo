@@ -8,7 +8,6 @@ const ctx = canvas.getContext('2d');
 
 canvas.width = container.clientWidth;
 canvas.height = canvas.width * 3 / 4;
-console.log(canvas.width);
 const width = canvas.width;
 const height = canvas.height;
 
