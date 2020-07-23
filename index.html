@@ -11,6 +11,10 @@
 			<canvas id="wave_canvas" width="800" height="600"></canvas>
 			<div id="bottomDisplay" style="color: white; padding: 5px;"></div>
 		</div>
+		<div id="fft_canvas_container">
+			<canvas id="fft_canvas" width="800" height="600"></canvas>
+			<div id="bottomDisplay2" style="color: white; padding: 5px;">1000Hz/div</div>
+		</div>
 		<div>
 			<div style="display: flex">
 				<button onclick="toggleRecording()" id="togglebutton">Run</button>
@@ -22,9 +26,6 @@
 				<button onclick="triggerLevel += 0.05">↑</button>
 				<button onclick="triggerLevel -= 0.05">↓</button>
 			</div>
-		</div>
-		<div id="fft_canvas_container">
-			<canvas id="fft_canvas" width="800" height="600"></canvas>
 		</div>
 		<script src="main.js"></script>
 	</body>

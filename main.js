@@ -38,7 +38,8 @@ let audioAnalyser = null;
 let audioData = []; // wave data
 
 // fft
-const fft_points = 1024;
+const fft_points = 4096;
+let fft_max_freq = 10000;
 let fftData = [];
 
 // flags
@@ -99,7 +100,7 @@ function fft(){
 	if (data.length < fft_points) return;
 
 	// calc w
-	const w =  [Math.cos(Math.PI * 2 / fft_points), Math.sin(Math.PI * 2 / fft_points)];
+	const w =  [Math.cos(Math.PI * 2 / fft_points), -Math.sin(Math.PI * 2 / fft_points)];
 	fftData = fft_r(data.map(r => [r, 0]), w).map(c => complex_abs(c));
 
 	function fft_r(x, w){
@@ -238,15 +239,45 @@ function drawFFT(){
 	const ctx = fft_canvas.getContext('2d');
 	ctx.clearRect(0, 0, width, height);
 
+	ctx.strokeStyle ="#fff";
+
+	// horizontal grid
+	[...Array(y_divs + 1)].map((_, i) => i).forEach(i => {
+		if(i * 2 == y_divs){
+			ctx.lineWidth = gridWidth_bold;
+		}else{
+			ctx.lineWidth = gridWidth;
+		}
+		const y = i * height / y_divs;
+		ctx.beginPath();
+		ctx.moveTo(0, y);
+		ctx.lineTo(width, y);
+		ctx.stroke();
+	});
+
+	// vertical grid
+	[...Array(x_divs + 1)].map((_, i) => i).forEach(i => {
+		if(i * 2 == x_divs){
+			ctx.lineWidth = gridWidth_bold;
+		}else{
+			ctx.lineWidth = gridWidth;
+		}
+		const x = i * width / x_divs;
+		ctx.beginPath();
+		ctx.moveTo(x, 0);
+		ctx.lineTo(x, height);
+		ctx.stroke();
+	});
+
 	if (!initialized) return;
 
-	ctx.strokeStyle = "red";
+	ctx.strokeStyle = waveColor;
 	ctx.lineWidth = waveWidth;
 
 	ctx.beginPath();
 
 	[...Array(width)].map((_, i) => i).forEach(x => {
-		const index = Math.floor(x * fft_points / width);
+		const index = Math.floor(x * fft_max_freq / audioContext.sampleRate * fft_points / width);
 		const val = fftData[index];
 		const y = (1 - val / 100) * canvas.height;
 		ctx.lineTo(x, y);
